@@ -1,0 +1,122 @@
+[project]
+name = "llm-blogging-twin"
+version = "1.0.0"
+description = "Fine-tune a local LLM on your blog posts to create your personal AI writing assistant"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+keywords = ["llm", "fine-tuning", "llama", "ollama", "unsloth", "blogging", "ai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Core ML and LLM dependencies
+    "torch>=2.1.0",
+    "transformers>=4.35.0",
+    "unsloth[colab-new]>=2024.1",
+    "accelerate>=0.24.0",
+    "bitsandbytes>=0.41.0",
+
+    # Pydantic AI for model interaction
+    "pydantic-ai>=0.0.13",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
+
+    # API and Web Framework
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "starlette>=0.27.0",
+
+    # Data processing
+    "pandas>=2.1.0",
+    "numpy>=1.24.0",
+    "python-docx>=1.1.0",
+    "markdown>=3.5.0",
+
+    # Configuration and CLI
+    "pyyaml>=6.0",
+    "click>=8.1.7",
+    "python-dotenv>=1.0.0",
+
+    # Utilities
+    "requests>=2.31.0",
+    "tqdm>=4.66.0",
+    "rich>=13.7.0",
+
+    # Evaluation metrics
+    "scikit-learn>=1.3.0",
+    "nltk>=3.8.0",
+    "rouge-score>=0.1.2",
+
+    # CORS for API
+    "fastapi-cors>=0.0.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "ipython>=8.0.0",
+]
+
+[project.scripts]
+blogging-twin = "cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/llm-blogging-twin"
+Documentation = "https://github.com/yourusername/llm-blogging-twin#readme"
+Repository = "https://github.com/yourusername/llm-blogging-twin"
+Issues = "https://github.com/yourusername/llm-blogging-twin/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src", "api"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"

@@ -1,0 +1,91 @@
+# My files
+Claude_Prompts.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# UV-specific
+# Note: uv.lock should be COMMITTED to git for reproducible builds
+# Only ignore .python-version if using pyenv
+.python-version
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data files
+data/raw/*.md
+data/raw/*.txt
+data/raw/*.docx
+data/processed/*.jsonl
+data/validation/*.jsonl
+
+# Model checkpoints (large files)
+models/checkpoints/*
+!models/checkpoints/.gitkeep
+
+# Results and logs
+results/
+*.log
+pipeline.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Ollama models (if downloaded locally)
+*.gguf
+*.bin
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

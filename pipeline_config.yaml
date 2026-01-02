@@ -1,0 +1,153 @@
+# LLM Blogging Twin - Pipeline Configuration
+# This file controls all aspects of the training pipeline
+
+# Data configuration
+data:
+  # Directory containing your blog files
+  input_dir: ./data/raw
+
+  # Output directory for processed data
+  output_dir: ./data/processed
+
+  # Supported file formats for blog ingestion
+  formats:
+    - md      # Markdown
+    - txt     # Plain text
+    - docx    # Microsoft Word
+
+  # Train/validation split ratio (0.8 = 80% train, 20% validation)
+  train_split: 0.8
+
+  # Validation dataset path
+  validation_dir: ./data/validation
+
+  # Minimum blog length (in words) to include in training
+  min_word_count: 100
+
+  # Maximum blog length (in words) - longer posts will be chunked
+  max_word_count: 2000
+
+# Fine-tuning configuration
+training:
+  # Base model from Ollama
+  base_model: llama3.2:1b
+
+  # Output directory for model checkpoints
+  output_dir: ./models/checkpoints
+
+  # Number of training epochs (3-5 is usually good)
+  epochs: 3
+
+  # Learning rate (2e-4 is standard for LoRA)
+  learning_rate: 2e-4
+
+  # Batch size (reduce if you run out of memory)
+  batch_size: 4
+
+  # Gradient accumulation steps (effective batch_size = batch_size * gradient_accumulation)
+  gradient_accumulation_steps: 4
+
+  # LoRA configuration
+  lora:
+    # LoRA rank (higher = more parameters, better quality, slower training)
+    r: 16
+
+    # LoRA alpha (scaling factor, typically 2x the rank)
+    alpha: 32
+
+    # Dropout probability for LoRA layers
+    dropout: 0.05
+
+    # Target modules to apply LoRA (for Llama models)
+    target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
+
+  # Training precision (fp16 for speed, bf16 if supported by GPU)
+  precision: fp16
+
+  # Maximum sequence length
+  max_seq_length: 2048
+
+  # Warmup steps for learning rate scheduler
+  warmup_steps: 100
+
+  # Save checkpoint every N steps
+  save_steps: 500
+
+  # Logging interval
+  logging_steps: 10
+
+# Ollama deployment configuration
+deployment:
+  # Name for your fine-tuned model in Ollama
+  model_name: blogging-twin:latest
+
+  # Ollama API base URL
+  ollama_base_url: http://localhost:11434
+
+  # Model parameters in Ollama
+  parameters:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 40
+    repeat_penalty: 1.1
+
+# Evaluation configuration
+evaluation:
+  # Run evaluation automatically after training
+  run_after_training: true
+
+  # Test prompts file
+  test_prompts_file: ./prompts/test_prompts.txt
+
+  # Number of sample generations for comparison
+  num_samples: 10
+
+  # Metrics to compute
+  metrics:
+    - perplexity          # Model confidence
+    - style_similarity    # Writing style match
+    - bleu                # Content overlap
+    - rouge               # Summary quality
+
+  # Output directory for evaluation reports
+  output_dir: ./results/evaluations
+
+# API server configuration
+api:
+  # Server host
+  host: 0.0.0.0
+
+  # Server port
+  port: 8000
+
+  # Enable CORS (for frontend development)
+  cors_enabled: true
+
+  # Allowed origins for CORS
+  cors_origins:
+    - http://localhost:5173  # Vite default
+    - http://localhost:3000  # Create React App default
+
+  # Generation defaults
+  generation:
+    max_tokens: 500
+    temperature: 0.7
+    top_p: 0.9
+
+# Logging configuration
+logging:
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  level: INFO
+
+  # Log file path
+  file: ./pipeline.log
+
+  # Console output format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
