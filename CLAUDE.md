@@ -46,9 +46,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install Python dependencies (creates .venv and uv.lock)
 uv sync
 
-# Activate virtual environment
-source .venv/bin/activate  # On macOS/Linux
-
 # Install Ollama and pull base model
 curl https://ollama.ai/install.sh | sh
 ollama pull llama3.2:1b
@@ -60,29 +57,69 @@ npm install
 
 ### Running the System
 ```bash
-# Start backend API server
-python cli.py serve --port 8000
+# Verify Ollama is running
+ollama list
+OR visit http://localhost:11434 - you should see "Ollama is running"
+
+# Start backend API server (uses uv to run with virtual environment)
+uv run python cli.py serve --port 8000
+And test in this http://localhost:8000/ - you will see a similar version - {"message":"LLM Blogging Twin API","version":"1.0.0","docs":"/docs","health":"/health"}
 
 # Start frontend (separate terminal)
 cd frontend
 npm run dev
+And view in this http://localhost:5173/
 
-# Verify Ollama is running
-ollama list
 ```
 
 ### CLI Pipeline Commands
 ```bash
 # Individual steps
-python cli.py ingest --input-dir ./blogs --output ./data/raw_blogs.jsonl
-python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/training_data.jsonl
-python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin
-python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
-python cli.py evaluate --model blogging-twin:v1
+uv run python cli.py ingest --input-dir ./blogs --output ./data/raw_blogs.jsonl
+uv run python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/training_data.jsonl
+uv run python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin
+uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
+uv run python cli.py evaluate --model blogging-twin:v1
 
 # Full pipeline (runs all steps)
-python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:latest
+uv run python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:latest
 ```
+
+### Steps to Fine-tune the Model
+- There are two approaches: individual steps (recommended for learning/debugging) or full pipeline (automated).
+
+####  Option 1: Individual Steps (Recommended First Time)
+- Step 1: Prepare Your Blog Data
+  - Place your blog files (.md, .txt, or .docx) in the data directory:
+  - mkdir -p data/raw
+  - Copy your blog files to data/raw/
+
+- Step 2: Ingest the Blogs
+  - Convert blog files to JSONL format:
+  - uv run python cli.py ingest --input-dir ./data/raw --output ./data/processed/raw_blogs.jsonl
+
+- Step 3: Prepare Training Dataset
+  - Convert to instruction-response format for fine-tuning:
+  - uv run python cli.py prepare-dataset --input ./data/processed/raw_blogs.jsonl --output ./data/processed/training_data.jsonl
+
+- Step 4: Fine-tune the Model
+  - Train the model with LoRA adapters:
+  - uv run python cli.py finetune --data ./data/processed/training_data.jsonl --output ./models/blogging_twin
+
+- Step 5: Deploy to Ollama
+  - Convert and import the fine-tuned model:
+  - uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
+
+- Step 6: Evaluate (Optional)
+  - Test the fine-tuned model:
+  - uv run python cli.py evaluate --model blogging-twin:v1
+
+####  Option 2: Full Pipeline (Automated)
+- Run everything in one command:
+- uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:latest
+- This runs all steps automatically: ingest → prepare → finetune → deploy → evaluate.
+
+
 
 ## Architecture Overview
 
@@ -222,18 +259,18 @@ The pipeline should:
 
 ### Adding New Blog Files
 1. Place files in `data/raw/`
-2. Run `python cli.py ingest` to process them
+2. Run `uv run python cli.py ingest` to process them
 3. Verify output in `data/processed/raw_blogs.jsonl`
 
 ### Retraining the Model
 1. Update blogs in `data/raw/`
-2. Run full pipeline: `python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:v2`
+2. Run full pipeline: `uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:v2`
 3. Compare old vs. new model using evaluation
 
 ### Testing Model Changes
 1. Make changes to fine-tuning parameters in `pipeline_config.yaml`
-2. Run `python cli.py finetune` (uses existing prepared data)
-3. Deploy with a new name: `python cli.py deploy --model-name blogging-twin:test`
+2. Run `uv run python cli.py finetune` (uses existing prepared data)
+3. Deploy with a new name: `uv run python cli.py deploy --model-name blogging-twin:test`
 4. Compare in UI by adding to model list
 
 ## Evaluation Philosophy
