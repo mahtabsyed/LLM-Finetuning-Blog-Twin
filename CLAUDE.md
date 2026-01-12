@@ -75,14 +75,14 @@ And view in this http://localhost:5173/
 ### CLI Pipeline Commands
 ```bash
 # Individual steps
-uv run python cli.py ingest --input-dir ./blogs --output ./data/raw_blogs.jsonl
-uv run python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/training_data.jsonl
-uv run python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin
+uv run python cli.py ingest --input-dir ./data/raw --output ./data/processed/raw_blogs.jsonl
+uv run python cli.py prepare-dataset --input ./data/processed/raw_blogs.jsonl --output ./data/processed/training_data.jsonl
+uv run python cli.py finetune --data ./data/processed/training_data.jsonl --output ./models/blogging_twin
 uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
 uv run python cli.py evaluate --model blogging-twin:v1
 
 # Full pipeline (runs all steps)
-uv run python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:latest
+uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:latest
 ```
 
 ### Steps to Fine-tune the Model
