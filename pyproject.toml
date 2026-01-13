@@ -28,39 +28,32 @@ dependencies = [
     "unsloth[colab-new]>=2024.1",
     "accelerate>=0.24.0",
     "bitsandbytes>=0.41.0",
-
     # Pydantic AI for model interaction
     "pydantic-ai>=0.0.13",
     "pydantic>=2.0.0",
     "openai>=1.0.0",
-
     # API and Web Framework
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "python-multipart>=0.0.6",
     "starlette>=0.27.0",
-
     # Data processing
     "pandas>=2.1.0",
     "numpy>=1.24.0",
     "python-docx>=1.1.0",
     "markdown>=3.5.0",
-
     # Configuration and CLI
     "pyyaml>=6.0",
     "click>=8.1.7",
     "python-dotenv>=1.0.0",
-
     # Utilities
     "requests>=2.31.0",
     "tqdm>=4.66.0",
     "rich>=13.7.0",
-
     # Evaluation metrics
     "scikit-learn>=1.3.0",
     "nltk>=3.8.0",
     "rouge-score>=0.1.2",
-
     # CORS for API
     "fastapi-cors>=0.0.6",
 ]
