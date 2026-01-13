@@ -1,309 +1,154 @@
-# LLM Blogging Twin - Fine-tune Your Personal AI Writing Assistant
+# LLM Blogging Twin
 
-> **Learn by doing**: This project teaches you how to fine-tune a local LLM to mimic your writing style. Perfect for understanding LLM fine-tuning, model deployment, and building AI-powered applications.
+> Fine-tune llama3.2:1b on your blog posts to create an AI that writes like you.
 
 ![Project Type](https://img.shields.io/badge/Type-Educational-blue)
 ![Python](https://img.shields.io/badge/Python-3.10+-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## What This Project Does
+## What This Does
 
-This project fine-tunes the **llama3.2:1b** model on your personal blog posts to create an AI that writes like you. It includes:
+Fine-tunes a local LLM to replicate your writing style with:
+- Modular CLI pipeline (run individual steps or complete workflow)
+- Platform-aware training (Apple Silicon MLX / NVIDIA CUDA auto-detection)
+- Local deployment with Ollama (no cloud required)
+- Interactive web interface for text generation
+- Side-by-side comparison of base vs fine-tuned models
 
-- 📚 **Data ingestion** from markdown, text, and Word documents
-- 🔧 **Fine-tuning pipeline** using unsloth.ai for efficient training
-- 🚀 **Local deployment** with Ollama (no cloud required!)
-- 🌐 **Web interface** to interact with your AI twin
-- 📊 **Evaluation tools** to compare base vs. fine-tuned models
-- 🔨 **Modular CLI** - run individual steps or complete pipeline
+**What you'll learn**: LLM fine-tuning with LoRA, local model deployment, FastAPI backends, React frontends, and MLOps pipeline design.
 
-## Why This Project is Great for Learning
-
-### You'll Learn:
-1. **LLM Fine-tuning Fundamentals**
-   - How to prepare training data for language models
-   - LoRA (Low-Rank Adaptation) technique for efficient fine-tuning
-   - Using unsloth.ai for optimized training
-
-2. **Local LLM Deployment**
-   - Setting up Ollama for local model hosting
-   - Working with OpenAI-compatible APIs
-   - Model management and version control
-
-3. **Full-Stack AI Application**
-   - Building a FastAPI backend for LLM interaction
-   - Creating a React frontend for AI chat
-   - Integrating frontend and backend with REST APIs
-
-4. **MLOps Practices**
-   - Building modular, reusable ML pipelines
-   - CLI design for ML workflows
-   - Configuration management with YAML
-
-5. **Practical AI Engineering**
-   - Data preprocessing for NLP tasks
-   - Model evaluation and comparison
-   - Production-ready code structure
-
-## Project Architecture
+## Architecture
 
 ```
-┌─────────────────┐
-│   Your Blogs    │
-│  (.md/.txt/.docx)│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Data Ingestion  │ ← Parse and clean blog files
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│Dataset Prep     │ ← Format for fine-tuning
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Fine-tuning    │ ← Train with unsloth.ai
-│  (unsloth.ai)   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│Ollama Deployment│ ← Deploy locally
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────────────┐
-│   FastAPI Backend + React UI    │ ← Interact with your twin
-└─────────────────────────────────┘
+Blog Files → Data Ingestion → Dataset Prep → Fine-tuning → Ollama Deployment → Web Interface
 ```
+
+Three-tier system: CLI Layer (orchestration) → Processing Layer (ML pipeline) → Interface Layer (API + UI)
+
+See [DESIGN.md](DESIGN.md) for detailed architecture.
 
 ## Quick Start
 
 ### Prerequisites
 
-```bash
-# System requirements
-- Python 3.10 or higher
-- Node.js 18+ (for frontend)
-- 8GB+ RAM (16GB recommended)
-- 10GB free disk space
-- uv (Python package manager - will be installed in setup)
-```
+| Requirement | Version |
+|-------------|---------|
+| Python | 3.10+ |
+| Node.js | 18+ |
+| RAM | 8GB min (16GB recommended) |
+| Storage | 10GB free |
+| GPU | Apple Silicon or NVIDIA recommended |
 
-**Note**: This project uses modern Python packaging with `pyproject.toml` and `uv` for dependency management. The `requirements.txt` file is kept for reference, but `pyproject.toml` is the source of truth.
-
-## Platform Compatibility
-
-This project supports fine-tuning on multiple hardware platforms:
-
-- ✅ **Apple Silicon Macs** (M1/M2/M3/M4/M5) - Uses MLX framework
-- ✅ **NVIDIA GPUs** - Uses CUDA
-- ✅ **AMD GPUs** - Uses ROCm (via unsloth)
-- ✅ **Intel GPUs** - Uses XPU (via unsloth)
+See [REQUIREMENTS.md](REQUIREMENTS.md) for detailed requirements.
 
 ### Installation
 
-The correct fine-tuning library is installed automatically based on your hardware:
-
 ```bash
-# Works on all platforms
-uv sync
-```
+# 1. Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-**What gets installed**:
-- **Apple Silicon**: `unsloth-mlx` + `mlx`
-- **Other platforms**: `unsloth` with CUDA/ROCm support
-
-### Hardware Requirements
-
-**Apple Silicon**:
-- macOS 13.0+ (15.0+ recommended for larger models)
-- Minimum 16GB unified RAM (32GB+ for models >7B)
-- Python 3.10+
-
-**NVIDIA GPU**:
-- CUDA 11.8+
-- Minimum 8GB VRAM (16GB+ recommended)
-- Python 3.10+
-
-### 1. Clone and Setup
-
-```bash
+# 2. Clone repository
 git clone https://github.com/yourusername/llm-blogging-twin.git
 cd llm-blogging-twin
 
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment and install all dependencies
-# This reads pyproject.toml and creates uv.lock for reproducible builds
+# 3. Install dependencies (auto-detects Apple Silicon/CUDA)
 uv sync
 
-# Activate the virtual environment
-source .venv/bin/activate  # On macOS/Linux
-# or: .venv\Scripts\activate  # On Windows
-
-# Install Ollama (macOS/Linux)
+# 4. Install Ollama and pull base model
 curl https://ollama.ai/install.sh | sh
-
-# Pull base model
 ollama pull llama3.2:1b
 
-# Verify installation
-ollama list
+# 5. Setup frontend
+cd frontend && npm install
 ```
 
-### 2. Prepare Your Data
+### Run the Pipeline
 
-Place your blog files in the `data/raw/` directory:
+Place your blog files (.md, .txt, or .docx) in `data/raw/`, then:
 
 ```bash
-mkdir -p data/raw
-# Copy your .md, .txt, or .docx blog files to data/raw/
+# Option 1: Full pipeline (recommended for first time)
+uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:v1
+
+# Option 2: Individual steps (for learning/debugging)
+uv run python cli.py ingest --input-dir ./data/raw --output ./data/processed/raw_blogs.jsonl
+uv run python cli.py prepare-dataset --input ./data/processed/raw_blogs.jsonl --output ./data/processed/training_data.jsonl
+uv run python cli.py finetune --data ./data/processed/training_data.jsonl --output ./models/blogging_twin
+uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
+uv run python cli.py evaluate --model blogging-twin:v1
 ```
 
-### 3. Run the Pipeline
+### Launch Web Interface
 
 ```bash
-# Option 1: Run complete pipeline (recommended for first time)
-python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:v1
+# Terminal 1: Backend
+uv run python cli.py serve --port 8000
 
-# Option 2: Run individual steps (for learning/debugging)
-python cli.py ingest --input-dir ./data/raw --output ./data/raw_blogs.jsonl
-python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/training_data.jsonl
-python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin
-python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
-python cli.py evaluate --model blogging-twin:v1
+# Terminal 2: Frontend
+cd frontend && npm run dev
 ```
 
-### 4. Launch the Web Interface
+Visit `http://localhost:5173` to interact with your AI twin.
 
-```bash
-# Terminal 1: Start backend API
-python cli.py serve --port 8000
+## Platform Support
 
-# Terminal 2: Start frontend
-cd frontend
-npm install
-npm run dev
-```
+Automatic hardware detection during `uv sync`:
 
-Visit `http://localhost:5173` to interact with your AI blogging twin!
+| Platform | Library | Framework |
+|----------|---------|-----------|
+| **Apple Silicon** (M1-M5) | unsloth-mlx | MLX |
+| **NVIDIA GPU** | unsloth | CUDA |
+| **AMD GPU** | unsloth | ROCm |
+| **Intel GPU** | unsloth | XPU |
+
+No manual configuration needed - the system detects your hardware and installs the correct dependencies.
 
 ## Project Structure
 
 ```
 llm-blogging-twin/
-├── README.md                    # You are here!
-├── REQUIREMENTS_AND_DESIGN.md   # Detailed design docs
-├── CLAUDE.md                    # Context for Claude Code
-├── pyproject.toml               # Project metadata & dependencies (source of truth)
-├── uv.lock                      # Locked dependencies (auto-generated, commit to git)
-├── requirements.txt             # Legacy format (for reference)
-├── cli.py                       # Main CLI entry point
-├── pipeline_config.yaml         # Configuration file
+├── README.md              # This file
+├── REQUIREMENTS.md        # Dependencies & installation
+├── DESIGN.md              # Architecture & components
+├── CLAUDE.md              # Context for Claude Code
+├── pyproject.toml         # Dependencies (source of truth)
+├── uv.lock                # Locked dependencies
+├── cli.py                 # CLI entry point
+├── pipeline_config.yaml   # Configuration
 │
-├── src/                         # Core modules
-│   ├── __init__.py
-│   ├── data_ingestion.py       # Read blog files
-│   ├── dataset_prep.py         # Format for training
-│   ├── finetune.py             # Unsloth fine-tuning
-│   ├── deploy.py               # Deploy to Ollama
-│   ├── evaluate.py             # Model evaluation
-│   └── pipeline.py             # Orchestration
+├── src/                   # Processing modules
+│   ├── data_ingestion.py
+│   ├── dataset_prep.py
+│   ├── finetune.py
+│   ├── deploy.py
+│   ├── evaluate.py
+│   └── pipeline.py
 │
-├── api/                         # Backend API
-│   ├── __init__.py
-│   ├── server.py               # FastAPI server
-│   └── models.py               # Pydantic schemas
-│
-├── frontend/                    # React web interface
-│   ├── package.json
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── components/
-│   │   └── services/
-│   └── public/
-│
-├── data/                        # Data directory
-│   ├── raw/                    # Your blog files go here
-│   ├── processed/              # Processed datasets
-│   └── validation/             # Test sets
-│
-├── models/                      # Model artifacts
-│   └── checkpoints/
-│
-├── prompts/                     # Test prompts
-│   └── test_prompts.txt
-│
-└── results/                     # Evaluation results
-    └── evaluations/
+├── api/                   # FastAPI backend
+├── frontend/              # React web interface
+├── data/                  # Data storage
+│   ├── raw/               # Your blog files go here
+│   ├── processed/         # Generated datasets
+│   └── validation/        # Test sets
+├── models/                # Model checkpoints
+└── results/               # Evaluation reports
 ```
 
-## Usage Examples
+## Key Commands
 
-### CLI Commands
-
-```bash
-# Ingest blog files
-python cli.py ingest --input-dir ./data/raw --output ./data/raw_blogs.jsonl
-
-# Prepare training dataset with 80/20 split
-python cli.py prepare-dataset \
-  --input ./data/raw_blogs.jsonl \
-  --output ./data/training_data.jsonl \
-  --split 0.8
-
-# Fine-tune the model
-python cli.py finetune \
-  --data ./data/training_data.jsonl \
-  --output ./models/blogging_twin \
-  --epochs 3 \
-  --lr 2e-4
-
-# Deploy to Ollama
-python cli.py deploy \
-  --model-path ./models/blogging_twin \
-  --model-name blogging-twin:v1
-
-# Evaluate model performance
-python cli.py evaluate \
-  --model blogging-twin:v1 \
-  --test-set ./data/validation.jsonl \
-  --output ./results/eval_report.json
-
-# Start API server
-python cli.py serve --port 8000
-
-# Run full pipeline
-python cli.py pipeline \
-  --blog-dir ./data/raw \
-  --model-name blogging-twin:latest
-```
-
-### Python API Usage
-
-```python
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.openai import OpenAIProvider
-
-# Connect to your fine-tuned model
-model = OpenAIModel(
-    model_name="blogging-twin:latest",
-    provider=OpenAIProvider(base_url="http://localhost:11434/v1")
-)
-
-# Generate blog content
-response = model.generate("Write about the future of AI")
-print(response)
-```
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `pipeline` | Run complete workflow | `uv run python cli.py pipeline --blog-dir ./data/raw` |
+| `ingest` | Parse blog files | `uv run python cli.py ingest --input-dir ./data/raw` |
+| `prepare-dataset` | Format training data | `uv run python cli.py prepare-dataset --input raw.jsonl` |
+| `finetune` | Train model | `uv run python cli.py finetune --data training.jsonl` |
+| `deploy` | Deploy to Ollama | `uv run python cli.py deploy --model-path ./models/v1` |
+| `evaluate` | Compare models | `uv run python cli.py evaluate --model blogging-twin:v1` |
+| `serve` | Start API server | `uv run python cli.py serve --port 8000` |
 
 ## Configuration
 
-Edit `pipeline_config.yaml` to customize:
+Edit `pipeline_config.yaml` to customize training:
 
 ```yaml
 data:
@@ -315,8 +160,8 @@ training:
   epochs: 3
   learning_rate: 2e-4
   batch_size: 4
-  lora_r: 16        # LoRA rank
-  lora_alpha: 32    # LoRA alpha
+  lora_r: 16           # LoRA rank
+  lora_alpha: 32       # LoRA alpha
 
 deployment:
   model_name: blogging-twin:latest
@@ -324,22 +169,15 @@ deployment:
 
 evaluation:
   run_after_training: true
-  metrics: [perplexity, style_similarity, bleu]
 ```
 
 ## How It Works
 
-### 1. Data Ingestion (`src/data_ingestion.py`)
-Reads your blog files and converts them to a structured JSONL format:
+### 1. Data Ingestion
+Reads blog files and converts to JSONL format with metadata (title, content, date, word count).
 
-```python
-# Input: blog_post.md
-# Output: {"title": "...", "content": "...", "date": "..."}
-```
-
-### 2. Dataset Preparation (`src/dataset_prep.py`)
-Transforms raw data into instruction-response pairs for fine-tuning:
-
+### 2. Dataset Preparation
+Transforms blogs into instruction-response pairs for fine-tuning:
 ```json
 {
   "instruction": "Write a blog post about AI safety",
@@ -348,126 +186,134 @@ Transforms raw data into instruction-response pairs for fine-tuning:
 }
 ```
 
-### 3. Fine-tuning (`src/finetune.py`)
-Uses **unsloth.ai** with **LoRA** (Low-Rank Adaptation) to efficiently fine-tune llama3.2:1b:
-- LoRA adds small trainable matrices instead of updating all parameters
-- Much faster and more memory-efficient than full fine-tuning
-- Preserves base model knowledge while adapting to your style
+### 3. Fine-tuning
+Uses unsloth with LoRA (Low-Rank Adaptation) for efficient training. LoRA adds small trainable matrices instead of updating all parameters, making it faster and more memory-efficient while preserving base knowledge.
 
-### 4. Deployment (`src/deploy.py`)
-Converts the fine-tuned model to Ollama format:
-- Creates a Modelfile with your adapter
-- Imports to local Ollama instance
-- Makes it available via OpenAI-compatible API
+### 4. Deployment
+Converts fine-tuned model to Ollama format and imports to local instance, making it available via OpenAI-compatible API.
 
 ### 5. Web Interface
-- **Backend**: FastAPI serves both base and fine-tuned models
-- **Frontend**: React UI for chatting with your AI twin
-- **Features**: Model selection, side-by-side comparison, response streaming
+FastAPI backend serves both models (base and fine-tuned). React frontend provides chat interface with model selection and side-by-side comparison.
 
 ## Key Technologies
 
-| Technology | Purpose | Why We Use It |
-|------------|---------|---------------|
-| **llama3.2:1b** | Base LLM | Small enough to run locally, capable enough for text generation |
-| **Ollama** | Model hosting | Easy local deployment, OpenAI-compatible API |
-| **unsloth.ai** | Fine-tuning | 2x faster training, optimized for LoRA |
-| **uv** | Package manager | 10-100x faster than pip, better dependency resolution |
-| **pydantic-ai** | Model interface | Type-safe Python SDK, OpenAI compatibility |
-| **FastAPI** | Backend API | Modern async Python framework, auto docs |
-| **React** | Frontend UI | Component-based, responsive interface |
-| **LoRA** | Fine-tuning method | Efficient parameter updates, preserves base knowledge |
+| Technology | Purpose |
+|------------|---------|
+| **llama3.2:1b** | Base model - small enough for local training |
+| **Ollama** | Local hosting with OpenAI-compatible API |
+| **unsloth/unsloth-mlx** | Optimized fine-tuning (platform-specific) |
+| **uv** | Fast Python dependency management |
+| **pydantic-ai** | Type-safe model interface |
+| **FastAPI** | Async Python web framework |
+| **React** | Interactive UI components |
+| **LoRA** | Efficient fine-tuning method |
 
-## Evaluation and Comparison
+## Python API Usage
 
-The project includes tools to compare base vs. fine-tuned models:
+```python
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
-```bash
-# Run comprehensive evaluation
-python cli.py evaluate --model blogging-twin:v1
+# Connect to fine-tuned model
+model = OpenAIModel(
+    model_name="blogging-twin:latest",
+    provider=OpenAIProvider(base_url="http://localhost:11434/v1")
+)
 
-# Output includes:
-# - Perplexity scores
-# - Style similarity metrics
-# - Side-by-side sample generations
-# - BLEU/ROUGE scores against original blogs
-```
-
-Example comparison:
-
-```
-Prompt: "Write about machine learning explainability"
-
-Base Model:
-"Machine learning explainability refers to understanding how models make decisions..."
-
-Fine-tuned Model (Your Style):
-"Let me tell you about ML explainability - it's fascinating stuff. When I first..."
+# Generate content
+response = model.generate("Write about the future of AI")
+print(response)
 ```
 
 ## Customization Ideas
 
-1. **Different base models**: Try llama3:8b or other models
-2. **Multiple writing styles**: Fine-tune separate models for technical vs. casual writing
-3. **Blog generation assistant**: Add structured prompts for different blog sections
-4. **Continuous learning**: Periodically retrain on new blogs
-5. **Style transfer controls**: Add sliders for formality, creativity, length
+1. **Different base models**: Try llama3:8b or other Ollama-compatible models
+2. **Multiple styles**: Fine-tune separate models for technical vs casual writing
+3. **Continuous learning**: Periodically retrain on new blog posts
+4. **Style controls**: Add sliders for formality, creativity, length in UI
+5. **Blog assistant**: Structured prompts for intros, conclusions, outlines
 
-## Adding New Dependencies
+## Dependency Management
 
-This project uses `uv` for modern dependency management:
+This project uses **uv** for modern Python dependency management:
 
 ```bash
-# Add a new package
+# Add new package
 uv add package-name
 
-# Add a development dependency
+# Add dev dependency
 uv add --dev pytest-cov
-
-# Add a specific version
-uv add "requests>=2.31.0"
 
 # Update dependencies
 uv sync
-
-# Update uv.lock after manual pyproject.toml edits
-uv lock
 ```
 
-The `uv.lock` file ensures reproducible builds - commit it to git!
+**Important**: `pyproject.toml` is the source of truth, not `requirements.txt`. The `uv.lock` file ensures reproducible builds - commit it to git.
 
 ## Troubleshooting
 
 ### Ollama not found
 ```bash
-# Check if Ollama is running
-curl http://localhost:11434/api/tags
+# Check if running
+curl http://localhost:11434
 
-# Start Ollama (if installed via package manager)
+# Start Ollama
 ollama serve
 ```
 
 ### Out of memory during fine-tuning
+Reduce batch size in `pipeline_config.yaml`:
 ```yaml
-# Reduce batch size in pipeline_config.yaml
 training:
   batch_size: 2  # or 1
 ```
 
 ### Model not generating good results
-- Ensure you have at least 10-20 blog posts for training
-- Try increasing epochs to 5-10
+- Ensure 10-20+ blog posts for training
+- Increase epochs to 5-10
 - Adjust learning rate (try 1e-4 or 3e-4)
-- Check that training loss is decreasing
+- Check training loss is decreasing
 
-## Learning Resources
+### Platform detection issues
+```bash
+# Check architecture
+uname -m
 
-### Included in this project:
-- `REQUIREMENTS_AND_DESIGN.md` - Complete system design
-- `CLAUDE.md` - Architecture and patterns
-- Inline code comments explaining each step
+# For Apple Silicon, ensure native Python (not Rosetta)
+python -c "import platform; print(platform.machine())"
+```
 
-### External resources:
+## Evaluation
+
+Compare base vs fine-tuned models:
+
+```bash
+uv run python cli.py evaluate --model blogging-twin:v1
+```
+
+Output includes:
+- Perplexity scores
+- Style similarity metrics
+- Side-by-side sample generations
+- BLEU/ROUGE scores
+
+Example comparison:
+
+**Prompt**: "Write about machine learning explainability"
+
+**Base Model**: "Machine learning explainability refers to understanding how models make decisions..."
+
+**Fine-tuned Model**: "Let me tell you about ML explainability - it's fascinating stuff. When I first..."
+
+## Documentation
+
+- **README.md** (this file): Quick start and overview
+- **REQUIREMENTS.md**: Detailed dependencies and installation
+- **DESIGN.md**: System architecture and component design
+- **CLAUDE.md**: Context for Claude Code (AI assistant)
+
+## Resources
+
 - [uv Documentation](https://docs.astral.sh/uv/)
 - [Ollama Documentation](https://ollama.ai/docs)
 - [Unsloth GitHub](https://github.com/unslothai/unsloth)
@@ -476,7 +322,7 @@ training:
 
 ## Contributing
 
-This is an educational project! Contributions are welcome:
+Contributions welcome:
 - Bug fixes and improvements
 - Additional data formats (PDF, HTML)
 - New evaluation metrics
@@ -485,7 +331,7 @@ This is an educational project! Contributions are welcome:
 
 ## License
 
-MIT License - Feel free to use this project for learning and building!
+MIT License - Feel free to use for learning and building.
 
 ## Acknowledgments
 
@@ -494,14 +340,8 @@ MIT License - Feel free to use this project for learning and building!
 - **unsloth.ai** for optimized fine-tuning
 - The open-source AI community
 
-## Questions or Feedback?
-
-- Open an issue for bugs or questions
-- Star the repo if you found it helpful!
-- Share your fine-tuned models and results
-
 ---
 
-**Happy Learning and Building!** 🚀
+**Questions?** Open an issue or star the repo if you found it helpful!
 
-*Remember: The goal isn't perfection, it's learning how these systems work. Experiment, break things, and understand the pieces.*
+*The goal is learning how these systems work. Experiment, break things, and understand the pieces.*

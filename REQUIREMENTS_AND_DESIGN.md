@@ -1,6 +1,8 @@
 # Requirements and Design Document
 ## LLM Blogging Twin - Fine-tuning Project
 
+> Last updated: 2026-01-13
+
 ### Project Overview
 Create a personal blogging twin by fine-tuning the llama3.2:1b model on previously written blog posts. The system will learn the author's writing style and voice to generate blog content that matches their unique perspective.
 
@@ -10,6 +12,70 @@ Create a personal blogging twin by fine-tuning the llama3.2:1b model on previous
 3. Build an interactive web interface for model interaction
 4. Enable comparison between base and fine-tuned models
 5. Provide evaluation metrics to assess fine-tuning quality
+
+---
+
+## Quick Start
+
+### Setup
+
+```bash
+# 1. Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install Python dependencies (auto-detects platform)
+uv sync
+
+# 3. Install Ollama and pull base model
+curl https://ollama.ai/install.sh | sh
+ollama pull llama3.2:1b
+
+# 4. Setup frontend
+cd frontend
+npm install
+```
+
+### Running the System
+
+```bash
+# Verify Ollama is running
+ollama list
+# OR visit http://localhost:11434 - you should see "Ollama is running"
+
+# Start backend API server (uses uv to run with virtual environment)
+uv run python cli.py serve --port 8000
+# Test at http://localhost:8000/ - you will see API info
+
+# Start frontend (separate terminal)
+cd frontend
+npm run dev
+# View at http://localhost:5173/
+```
+
+### Fine-tuning Pipeline
+
+**Option 1: Full pipeline (automated)**
+```bash
+uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:latest
+```
+
+**Option 2: Individual steps (for learning/debugging)**
+```bash
+# Step 1: Ingest blogs
+uv run python cli.py ingest --input-dir ./data/raw --output ./data/processed/raw_blogs.jsonl
+
+# Step 2: Prepare training dataset
+uv run python cli.py prepare-dataset --input ./data/processed/raw_blogs.jsonl --output ./data/processed/training_data.jsonl
+
+# Step 3: Fine-tune the model
+uv run python cli.py finetune --data ./data/processed/training_data.jsonl --output ./models/blogging_twin
+
+# Step 4: Deploy to Ollama
+uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
+
+# Step 5: Evaluate (optional)
+uv run python cli.py evaluate --model blogging-twin:v1
+```
 
 ---
 
@@ -62,7 +128,7 @@ def parse_txt(file_path: str) -> str
 
 **CLI Command**:
 ```bash
-python cli.py ingest --input-dir ./blogs --output ./data/raw_blogs.jsonl
+uv run python cli.py ingest --input-dir ./blogs --output ./data/raw_blogs.jsonl
 ```
 
 ---
@@ -88,7 +154,7 @@ python cli.py ingest --input-dir ./blogs --output ./data/raw_blogs.jsonl
 
 **CLI Command**:
 ```bash
-python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/training_data.jsonl --split 0.8
+uv run python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/training_data.jsonl --split 0.8
 ```
 
 ---
@@ -140,7 +206,7 @@ def train_model(...):
 
 **CLI Command**:
 ```bash
-uv run python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin --epochs 3 --lr 2e-4
+uv run uv run python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin --epochs 3 --lr 2e-4
 ```
 
 ---
@@ -157,7 +223,7 @@ uv run python cli.py finetune --data ./data/training_data.jsonl --output ./model
 
 **CLI Command**:
 ```bash
-python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:latest
+uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:latest
 ```
 
 **Ollama Modelfile Template**:
@@ -213,7 +279,11 @@ finetuned_model = OpenAIModel(
 
 **CLI Command**:
 ```bash
-python cli.py serve --port 8000
+# Start backend API server
+uv run python cli.py serve --port 8000
+
+# Test endpoint - should return: {"message":"LLM Blogging Twin API","version":"1.0.0","docs":"/docs","health":"/health"}
+# Visit: http://localhost:8000/
 ```
 
 ---
@@ -268,6 +338,8 @@ const generateResponse = async (prompt, model) => {
 cd frontend
 npm install
 npm run dev
+
+# View in browser: http://localhost:5173/
 ```
 
 **Responsive Design Implementation**:
@@ -299,7 +371,7 @@ npm run dev
 
 **CLI Command**:
 ```bash
-python cli.py evaluate --model blogging-twin:latest --test-set ./data/validation.jsonl --output ./results/eval_report.json
+uv run python cli.py evaluate --model blogging-twin:latest --test-set ./data/validation.jsonl --output ./results/eval_report.json
 ```
 
 **Output**:
@@ -327,7 +399,7 @@ python cli.py evaluate --model blogging-twin:latest --test-set ./data/validation
 
 **CLI Command**:
 ```bash
-python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:latest
+uv run python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:latest
 ```
 
 **Configuration File** (`pipeline_config.yaml`):
@@ -373,17 +445,17 @@ Commands:
 **Example Usage**:
 ```bash
 # Individual steps
-python cli.py ingest --input-dir ./blogs --output ./data/raw.jsonl
-python cli.py prepare-dataset --input ./data/raw.jsonl --output ./data/train.jsonl
-python cli.py finetune --data ./data/train.jsonl --output ./models/v1
-python cli.py deploy --model-path ./models/v1 --model-name blogging-twin:v1
-python cli.py evaluate --model blogging-twin:v1
+uv run python cli.py ingest --input-dir ./blogs --output ./data/raw.jsonl
+uv run python cli.py prepare-dataset --input ./data/raw.jsonl --output ./data/train.jsonl
+uv run python cli.py finetune --data ./data/train.jsonl --output ./models/v1
+uv run python cli.py deploy --model-path ./models/v1 --model-name blogging-twin:v1
+uv run python cli.py evaluate --model blogging-twin:v1
 
 # Full pipeline
-python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:v1
+uv run python cli.py pipeline --blog-dir ./blogs --model-name blogging-twin:v1
 
 # Start web interface
-python cli.py serve --port 8000
+uv run python cli.py serve --port 8000
 # In another terminal:
 cd frontend && npm run dev
 ```
@@ -426,7 +498,8 @@ llm-blogging-twin/
 ├── REQUIREMENTS_AND_DESIGN.md
 ├── CLAUDE.md
 ├── cli.py                      # Main CLI entry point
-├── requirements.txt
+├── pyproject.toml              # Dependencies (source of truth)
+├── uv.lock                     # Locked dependencies (commit to git)
 ├── pipeline_config.yaml
 │
 ├── src/
@@ -472,28 +545,28 @@ llm-blogging-twin/
 
 ### Phase 1: Data Preparation
 1. Collect blog files in `data/raw/`
-2. Run ingestion: `python cli.py ingest`
-3. Prepare dataset: `python cli.py prepare-dataset`
+2. Run ingestion: `uv run python cli.py ingest`
+3. Prepare dataset: `uv run python cli.py prepare-dataset`
 4. Review and validate training data
 
 ### Phase 2: Model Fine-tuning
 1. Configure `pipeline_config.yaml`
-2. Run fine-tuning: `python cli.py finetune`
+2. Run fine-tuning: `uv run python cli.py finetune`
 3. Monitor training metrics
 4. Save checkpoints
 
 ### Phase 3: Deployment
-1. Deploy to Ollama: `python cli.py deploy`
+1. Deploy to Ollama: `uv run python cli.py deploy`
 2. Verify model: `ollama list`
 3. Test basic inference: `ollama run blogging-twin:latest "Write about AI"`
 
 ### Phase 4: Web Interface
-1. Start backend: `python cli.py serve`
+1. Start backend: `uv run python cli.py serve`
 2. Start frontend: `cd frontend && npm run dev`
 3. Test interaction at `http://localhost:5173`
 
 ### Phase 5: Evaluation
-1. Run automated evaluation: `python cli.py evaluate`
+1. Run automated evaluation: `uv run python cli.py evaluate`
 2. Compare base vs. fine-tuned outputs
 3. Iterate on training if needed
 
@@ -544,11 +617,42 @@ dev = [
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install dependencies (creates .venv and uv.lock)
+# Automatically detects hardware and installs correct packages
 uv sync
 
 # Activate virtual environment
 source .venv/bin/activate  # On macOS/Linux
+# or: .venv\Scripts\activate  # On Windows
 ```
+
+**Platform Detection**:
+- `uv sync` automatically detects your hardware (Apple Silicon vs CUDA)
+- Installs `unsloth-mlx` + `mlx` on Apple Silicon
+- Installs `unsloth` with CUDA/ROCm support on other platforms
+- No manual configuration needed
+
+**Adding New Dependencies**:
+```bash
+# Add runtime dependency
+uv add package-name
+
+# Add development dependency
+uv add --dev pytest-cov
+
+# Add specific version
+uv add "requests>=2.31.0"
+
+# Sync dependencies after manual pyproject.toml edits
+uv sync
+
+# Update lock file
+uv lock
+```
+
+**Important Notes**:
+- `pyproject.toml` is the source of truth (NOT `requirements.txt`)
+- `uv.lock` ensures reproducible builds - commit it to git
+- `.venv/` is auto-created and managed by uv
 
 ### Frontend (`frontend/package.json`)
 ```json
@@ -576,12 +680,40 @@ ollama pull llama3.2:1b
 
 # Verify installation
 ollama list
+
+# Verify Ollama is running
+# Method 1: Check API endpoint
+curl http://localhost:11434
+# Should return: "Ollama is running"
+
+# Method 2: Visit in browser
+# http://localhost:11434 - you should see "Ollama is running"
 ```
 
 ### System Requirements
-- **RAM**: Minimum 8GB (16GB recommended)
-- **Storage**: 10GB for models and data
-- **GPU**: Optional but recommended (CUDA-compatible)
+
+| Component | Requirement |
+|-----------|------------|
+| **Python** | 3.10+ |
+| **Node.js** | 18+ (for frontend) |
+| **RAM** | 8GB minimum (16GB recommended) |
+| **Storage** | 10GB for models and data |
+| **OS** | macOS, Linux, or Windows |
+
+### Hardware Platform Support
+
+Fine-tuning automatically detects your hardware and installs the appropriate libraries:
+
+| Platform | Library | Framework | Model Repository |
+|----------|---------|-----------|------------------|
+| **Apple Silicon** (M1/M2/M3/M4/M5) | unsloth-mlx | MLX | mlx-community/Llama-3.2-1B-Instruct-4bit |
+| **NVIDIA GPU** | unsloth | CUDA | unsloth/llama-3.2-1b |
+| **AMD GPU** | unsloth | ROCm | unsloth/llama-3.2-1b |
+| **Intel GPU** | unsloth | XPU | unsloth/llama-3.2-1b |
+
+**Hardware-Specific Requirements**:
+- **Apple Silicon**: macOS 13.0+ (15.0+ recommended), 16GB+ unified RAM
+- **NVIDIA GPU**: CUDA 11.8+, 8GB+ VRAM (16GB+ recommended)
 
 ---
 
