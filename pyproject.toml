@@ -25,7 +25,10 @@ dependencies = [
     # Core ML and LLM dependencies
     "torch>=2.1.0",
     "transformers>=4.35.0",
-    "unsloth[colab-new]>=2024.1",
+    # Platform-specific fine-tuning libraries (auto-detect)
+    "unsloth[colab-new]>=2024.1; platform_machine!='arm64' and platform_machine!='aarch64'",
+    "unsloth-mlx>=0.3.2; platform_machine=='arm64' or platform_machine=='aarch64'",
+    "mlx>=0.20.0; platform_machine=='arm64' or platform_machine=='aarch64'",
     "accelerate>=0.24.0",
     "bitsandbytes>=0.41.0",
     # Pydantic AI for model interaction
@@ -56,6 +59,9 @@ dependencies = [
     "rouge-score>=0.1.2",
     # CORS for API
     "fastapi-cors>=0.0.6",
+    "ipykernel>=7.1.0",
+    "jupyter>=1.1.1",
+    "ipywidgets>=8.1.8",
 ]
 
 [project.optional-dependencies]

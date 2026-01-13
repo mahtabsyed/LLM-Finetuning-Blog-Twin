@@ -22,18 +22,23 @@ model = OpenAIModel(
 
 The base model is `llama3.2:1b` hosted locally via Ollama. After fine-tuning, the model is deployed as `blogging-twin:latest` (or versioned like `blogging-twin:v1`).
 
+**Platform Support**: Fine-tuning automatically detects your hardware:
+- **Apple Silicon (M1/M2/M3/M4/M5)**: Uses `unsloth-mlx` with MLX framework
+- **NVIDIA/AMD/Intel GPUs**: Uses `unsloth` with CUDA/ROCm
+
 ## Dependency Management
 
 This project uses **uv** for modern Python dependency management:
 - **Source of truth**: `pyproject.toml` (NOT requirements.txt)
 - **Lock file**: `uv.lock` ensures reproducible builds (commit to git)
 - **Virtual environment**: `.venv/` (auto-created by `uv sync`)
+- **Platform detection**: Automatically installs `unsloth-mlx` on Apple Silicon, `unsloth` on CUDA GPUs
 
 To add dependencies:
 ```bash
 uv add package-name              # Add to dependencies
 uv add --dev package-name        # Add to dev dependencies
-uv sync                          # Install/update all dependencies
+uv sync                          # Install/update all dependencies (auto-detects platform)
 ```
 
 ## Common Commands
@@ -85,40 +90,41 @@ uv run python cli.py evaluate --model blogging-twin:v1
 uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:latest
 ```
 
+```bash
 ### Steps to Fine-tune the Model
 - There are two approaches: individual steps (recommended for learning/debugging) or full pipeline (automated).
 
 ####  Option 1: Individual Steps (Recommended First Time)
 - Step 1: Prepare Your Blog Data
   - Place your blog files (.md, .txt, or .docx) in the data directory:
-  - mkdir -p data/raw
+  mkdir -p data/raw
   - Copy your blog files to data/raw/
 
 - Step 2: Ingest the Blogs
   - Convert blog files to JSONL format:
-  - uv run python cli.py ingest --input-dir ./data/raw --output ./data/processed/raw_blogs.jsonl
+  uv run python cli.py ingest --input-dir ./data/raw --output ./data/processed/raw_blogs.jsonl
 
 - Step 3: Prepare Training Dataset
   - Convert to instruction-response format for fine-tuning:
-  - uv run python cli.py prepare-dataset --input ./data/processed/raw_blogs.jsonl --output ./data/processed/training_data.jsonl
+  uv run python cli.py prepare-dataset --input ./data/processed/raw_blogs.jsonl --output ./data/processed/training_data.jsonl
 
 - Step 4: Fine-tune the Model
   - Train the model with LoRA adapters:
-  - uv run python cli.py finetune --data ./data/processed/training_data.jsonl --output ./models/blogging_twin
+  uv run python cli.py finetune --data ./data/processed/training_data.jsonl --output ./models/blogging_twin
 
 - Step 5: Deploy to Ollama
   - Convert and import the fine-tuned model:
-  - uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
+  uv run python cli.py deploy --model-path ./models/blogging_twin --model-name blogging-twin:v1
 
 - Step 6: Evaluate (Optional)
   - Test the fine-tuned model:
-  - uv run python cli.py evaluate --model blogging-twin:v1
+  uv run python cli.py evaluate --model blogging-twin:v1
 
 ####  Option 2: Full Pipeline (Automated)
 - Run everything in one command:
-- uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:latest
+uv run python cli.py pipeline --blog-dir ./data/raw --model-name blogging-twin:latest
 - This runs all steps automatically: ingest → prepare → finetune → deploy → evaluate.
-
+```
 
 
 ## Architecture Overview
@@ -166,6 +172,28 @@ Each component (`ingest`, `prepare-dataset`, `finetune`, `deploy`, `evaluate`) i
 - Independently executable for development/debugging
 - Composable in the pipeline command
 - Configured via `pipeline_config.yaml` for consistency
+
+### Platform-Aware Fine-Tuning
+
+The fine-tuning system automatically adapts to available hardware:
+
+**Hardware Detection**:
+- Checks for Apple Silicon (Darwin + arm64)
+- Falls back to CUDA detection (torch.cuda.is_available())
+- Raises error if no supported GPU found
+
+**Library Selection**:
+- **unsloth-mlx** (Apple Silicon): Uses MLX framework optimized for unified memory
+- **unsloth** (CUDA): Uses Triton kernels for NVIDIA GPUs
+
+**Model Repositories**:
+- Apple Silicon: `mlx-community/Llama-3.2-1B-Instruct-4bit`
+- CUDA: `unsloth/llama-3.2-1b`
+
+**API Differences**:
+- Training API is largely compatible (both use SFTTrainer)
+- MLX handles precision automatically (no fp16/bf16 flags needed)
+- Model loading and LoRA application use same FastLanguageModel API
 
 ## Frontend-Backend Communication
 

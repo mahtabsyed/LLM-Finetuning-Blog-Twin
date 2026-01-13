@@ -21,7 +21,9 @@ Create a personal blogging twin by fine-tuning the llama3.2:1b model on previous
 - **Python**: Core language for ML pipeline
 - **Ollama**: Local LLM hosting (llama3.2:1b)
 - **pydantic-ai**: Model interaction via OpenAI-compatible interface
-- **unsloth.ai**: Fine-tuning framework
+- **unsloth.ai / unsloth-mlx**: Fine-tuning framework (platform-specific)
+  - **unsloth**: For NVIDIA/AMD/Intel GPUs (CUDA/ROCm)
+  - **unsloth-mlx**: For Apple Silicon Macs (MLX framework)
 - **FastAPI**: Backend API server (for frontend communication)
 
 #### Frontend
@@ -93,23 +95,52 @@ python cli.py prepare-dataset --input ./data/raw_blogs.jsonl --output ./data/tra
 
 ### 3. Fine-tuning Module (`finetune.py`)
 
-**Purpose**: Fine-tune llama3.2:1b using unsloth.ai
+**Purpose**: Fine-tune llama3.2:1b using platform-appropriate framework
+
+**Platform-Aware Architecture**:
+The fine-tuning module automatically detects hardware and selects the appropriate library:
+
+| Platform | Library | Framework | Model Repository |
+|----------|---------|-----------|------------------|
+| Apple Silicon (M1/M2/M3/M4/M5) | unsloth-mlx | MLX | mlx-community/Llama-3.2-1B-Instruct-4bit |
+| NVIDIA GPU | unsloth | CUDA | unsloth/llama-3.2-1b |
+| AMD GPU | unsloth | ROCm | unsloth/llama-3.2-1b |
+| Intel GPU | unsloth | XPU | unsloth/llama-3.2-1b |
 
 **Configuration**:
-- Base model: `llama3.2:1b`
+- Base model: `llama3.2:1b` (auto-mapped to platform-specific variant)
 - Fine-tuning method: LoRA (Low-Rank Adaptation)
 - Training parameters: Learning rate, epochs, batch size
+- Hardware detection: Automatic via `detect_hardware_platform()`
 
 **Process**:
-1. Load base model via unsloth
-2. Apply LoRA adapters
-3. Train on prepared dataset
-4. Save fine-tuned weights
-5. Export to Ollama-compatible format
+1. Detect hardware platform (Apple Silicon vs CUDA vs CPU)
+2. Import appropriate library (`unsloth_mlx` or `unsloth`)
+3. Load platform-specific base model
+4. Apply LoRA adapters
+5. Configure platform-aware training arguments
+6. Train on prepared dataset
+7. Save fine-tuned weights
+8. Export to Ollama-compatible format
+
+**Key Functions**:
+```python
+def detect_hardware_platform() -> str:
+    """Returns 'apple_silicon', 'cuda', or 'cpu'"""
+
+def get_platform_model_name(platform: str, base_model: str) -> str:
+    """Maps generic model name to platform-specific repository"""
+
+def load_base_model(...):
+    """Dynamically imports and loads appropriate FastLanguageModel"""
+
+def train_model(...):
+    """Platform-aware training configuration (MLX skips precision flags)"""
+```
 
 **CLI Command**:
 ```bash
-python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin --epochs 3 --lr 2e-4
+uv run python cli.py finetune --data ./data/training_data.jsonl --output ./models/blogging_twin --epochs 3 --lr 2e-4
 ```
 
 ---

@@ -1,0 +1,14 @@
+# Modelfile for blogging-twin:v1
+# This model is a fine-tuned version of llama3.2:1b
+# Fine-tuned on personal blog posts
+
+FROM llama3.2:1b
+
+# Generation parameters
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.1
+
+# System message to set the context
+SYSTEM You are a helpful AI assistant that writes in a personal, engaging blog style. You have been trained on a collection of blog posts to understand the author's voice and perspective.

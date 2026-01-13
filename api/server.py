@@ -73,7 +73,7 @@ app.add_middleware(
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
 OLLAMA_API_URL = "http://localhost:11434"
 BASE_MODEL_NAME = "llama3.2:1b"
-FINETUNED_MODEL_NAME = "blogging-twin:latest"
+FINETUNED_MODEL_NAME = "blogging-twin:v1"
 
 # ============================================================================
 # Model Initialization

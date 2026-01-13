@@ -1,8 +1,10 @@
 """
 Fine-tuning Module
 
-This module handles fine-tuning the llama3.2:1b model using unsloth.ai.
-unsloth provides optimized implementations of LoRA (Low-Rank Adaptation) for efficient training.
+This module handles fine-tuning the llama3.2:1b model using unsloth.ai or unsloth-mlx.
+Automatically detects hardware and uses the appropriate library:
+- Apple Silicon (M1/M2/M3/M4/M5): Uses unsloth-mlx with MLX framework
+- NVIDIA/AMD/Intel GPUs: Uses unsloth with CUDA/ROCm
 
 Key concepts:
 - LoRA: Adds small trainable matrices to model layers instead of training all parameters
@@ -10,6 +12,7 @@ Key concepts:
 - Preserves: Keeps base model knowledge while adapting to your writing style
 
 Key functions:
+- detect_hardware_platform(): Detect GPU type
 - load_base_model(): Load llama3.2:1b with LoRA adapters
 - prepare_training_dataset(): Format data for the trainer
 - train_model(): Execute the fine-tuning process
@@ -26,21 +29,77 @@ import torch
 logger = logging.getLogger(__name__)
 
 
+def detect_hardware_platform() -> str:
+    """
+    Detect the hardware platform for fine-tuning.
+
+    Returns:
+        str: 'apple_silicon', 'cuda', or 'cpu'
+    """
+    import platform
+
+    # Check for Apple Silicon (M1/M2/M3/M4/M5)
+    if platform.system() == 'Darwin' and platform.machine() == 'arm64':
+        return 'apple_silicon'
+
+    # Check for NVIDIA CUDA
+    if torch.cuda.is_available():
+        return 'cuda'
+
+    # Fallback to CPU
+    return 'cpu'
+
+
 def check_gpu_availability():
     """
-    Check if GPU is available for training.
+    Check hardware availability and provide detailed feedback.
 
-    Returns information about GPU status for the user.
+    Returns:
+        bool: True if supported GPU is detected, False otherwise
     """
-    if torch.cuda.is_available():
+    import platform
+
+    hw_platform = detect_hardware_platform()
+
+    if hw_platform == 'apple_silicon':
+        logger.info("✓ Apple Silicon detected")
+        logger.info(f"  Chip: {platform.processor()}")
+        logger.info("  Using MLX framework for training")
+        return True
+    elif hw_platform == 'cuda':
         gpu_name = torch.cuda.get_device_name(0)
-        logger.info(f"✓ GPU available: {gpu_name}")
+        logger.info(f"✓ NVIDIA GPU available: {gpu_name}")
         logger.info(f"  CUDA version: {torch.version.cuda}")
         return True
     else:
-        logger.warning("⚠ No GPU detected - training will use CPU (slower)")
-        logger.warning("  Consider using Google Colab for GPU access")
+        logger.warning("⚠ No supported GPU detected")
+        logger.warning("  Supported: Apple Silicon (M1/M2/M3/M4/M5) or NVIDIA CUDA")
         return False
+
+
+def get_platform_model_name(platform: str, base_model: str = "llama3.2:1b") -> str:
+    """
+    Map generic model name to platform-specific model repository.
+
+    Args:
+        platform: Hardware platform ('apple_silicon' or 'cuda')
+        base_model: Generic model identifier
+
+    Returns:
+        Platform-specific model name
+    """
+    model_map = {
+        'apple_silicon': {
+            'llama3.2:1b': 'mlx-community/Llama-3.2-1B-Instruct-4bit',
+            'llama3.2:3b': 'mlx-community/Llama-3.2-3B-Instruct-4bit',
+        },
+        'cuda': {
+            'llama3.2:1b': 'unsloth/llama-3.2-1b',
+            'llama3.2:3b': 'unsloth/llama-3.2-3b',
+        }
+    }
+
+    return model_map.get(platform, {}).get(base_model, 'unsloth/llama-3.2-1b')
 
 
 def load_base_model(
@@ -53,12 +112,10 @@ def load_base_model(
 ):
     """
     Load the base model with LoRA configuration.
-
-    This function uses unsloth's FastLanguageModel to load the model
-    with optimized LoRA adapters already attached.
+    Automatically detects hardware and uses appropriate library.
 
     Args:
-        model_name: HuggingFace model name (unsloth provides optimized versions)
+        model_name: HuggingFace model name (platform-specific models are auto-selected)
         max_seq_length: Maximum sequence length for training
         lora_r: LoRA rank (higher = more parameters, better quality, slower)
         lora_alpha: LoRA scaling factor (typically 2x the rank)
@@ -68,10 +125,34 @@ def load_base_model(
     Returns:
         Tuple of (model, tokenizer)
     """
-    from unsloth import FastLanguageModel
+    # Detect platform
+    platform = detect_hardware_platform()
+
+    # Import appropriate library and get model name
+    if platform == 'apple_silicon':
+        try:
+            from unsloth_mlx import FastLanguageModel
+            # Map to MLX-optimized model
+            if 'llama-3.2-1b' in model_name.lower() or 'llama3.2:1b' in model_name.lower():
+                model_name = 'mlx-community/Llama-3.2-1B-Instruct-4bit'
+            logger.info("✓ Using unsloth-mlx for Apple Silicon")
+        except ImportError:
+            logger.error("unsloth-mlx not installed. Run: uv sync")
+            raise
+    elif platform == 'cuda':
+        try:
+            from unsloth import FastLanguageModel
+            logger.info("✓ Using unsloth for CUDA GPU")
+        except ImportError:
+            logger.error("unsloth not installed. Run: uv sync")
+            raise
+    else:
+        logger.error("No supported GPU found for fine-tuning")
+        raise RuntimeError("Fine-tuning requires Apple Silicon or NVIDIA GPU")
 
     logger.info("Loading base model with LoRA configuration...")
     logger.info(f"  Model: {model_name}")
+    logger.info(f"  Platform: {platform}")
     logger.info(f"  Max sequence length: {max_seq_length}")
     logger.info(f"  LoRA rank (r): {lora_r}")
     logger.info(f"  LoRA alpha: {lora_alpha}")
@@ -235,8 +316,14 @@ def train_model(
     Returns:
         Trained model
     """
+    # Import platform-specific training classes
     from transformers import TrainingArguments
-    from trl import SFTTrainer
+    platform = detect_hardware_platform()
+
+    if platform == 'apple_silicon':
+      from unsloth_mlx import SFTTrainer
+    else:
+      from trl import SFTTrainer
 
     logger.info("=" * 60)
     logger.info("Starting model training")
@@ -251,25 +338,36 @@ def train_model(
     # Create output directory
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    # Define training arguments
-    training_args = TrainingArguments(
-        output_dir=output_dir,
-        num_train_epochs=num_epochs,
-        per_device_train_batch_size=batch_size,
-        gradient_accumulation_steps=gradient_accumulation_steps,
-        learning_rate=learning_rate,
-        fp16=not torch.cuda.is_bf16_supported(),  # Use fp16 unless bf16 is available
-        bf16=torch.cuda.is_bf16_supported(),
-        logging_steps=logging_steps,
-        save_steps=save_steps,
-        save_total_limit=3,  # Keep only last 3 checkpoints
-        warmup_steps=warmup_steps,
-        optim="adamw_8bit",  # Use 8-bit AdamW optimizer for efficiency
-        weight_decay=0.01,
-        lr_scheduler_type="linear",
-        seed=42,
-        report_to="none",  # Disable wandb/tensorboard for simplicity
-    )
+    # Detect platform for training configuration
+    platform = detect_hardware_platform()
+
+    # Define training arguments (platform-aware)
+    training_args_dict = {
+        "output_dir": output_dir,
+        "num_train_epochs": num_epochs,
+        "per_device_train_batch_size": batch_size,
+        "gradient_accumulation_steps": gradient_accumulation_steps,
+        "learning_rate": learning_rate,
+        "logging_steps": logging_steps,
+        "save_steps": save_steps,
+        "save_total_limit": 3,  # Keep only last 3 checkpoints
+        "warmup_steps": warmup_steps,
+        "optim": "adamw_8bit",  # Use 8-bit AdamW optimizer for efficiency
+        "weight_decay": 0.01,
+        "lr_scheduler_type": "linear",
+        "seed": 42,
+        "report_to": "none",  # Disable wandb/tensorboard for simplicity
+    }
+
+    # Add precision flags only for CUDA (MLX handles automatically)
+    if platform == 'cuda':
+        training_args_dict["fp16"] = not torch.cuda.is_bf16_supported()
+        training_args_dict["bf16"] = torch.cuda.is_bf16_supported()
+        logger.info(f"  Precision: {'bf16' if torch.cuda.is_bf16_supported() else 'fp16'}")
+    else:
+        logger.info("  Precision: Handled by MLX framework")
+
+    training_args = TrainingArguments(**training_args_dict)
 
     # Create SFT (Supervised Fine-Tuning) trainer
     trainer = SFTTrainer(

@@ -95,6 +95,40 @@ This project fine-tunes the **llama3.2:1b** model on your personal blog posts to
 
 **Note**: This project uses modern Python packaging with `pyproject.toml` and `uv` for dependency management. The `requirements.txt` file is kept for reference, but `pyproject.toml` is the source of truth.
 
+## Platform Compatibility
+
+This project supports fine-tuning on multiple hardware platforms:
+
+- ✅ **Apple Silicon Macs** (M1/M2/M3/M4/M5) - Uses MLX framework
+- ✅ **NVIDIA GPUs** - Uses CUDA
+- ✅ **AMD GPUs** - Uses ROCm (via unsloth)
+- ✅ **Intel GPUs** - Uses XPU (via unsloth)
+
+### Installation
+
+The correct fine-tuning library is installed automatically based on your hardware:
+
+```bash
+# Works on all platforms
+uv sync
+```
+
+**What gets installed**:
+- **Apple Silicon**: `unsloth-mlx` + `mlx`
+- **Other platforms**: `unsloth` with CUDA/ROCm support
+
+### Hardware Requirements
+
+**Apple Silicon**:
+- macOS 13.0+ (15.0+ recommended for larger models)
+- Minimum 16GB unified RAM (32GB+ for models >7B)
+- Python 3.10+
+
+**NVIDIA GPU**:
+- CUDA 11.8+
+- Minimum 8GB VRAM (16GB+ recommended)
+- Python 3.10+
+
 ### 1. Clone and Setup
 
 ```bash
